@@ -1,0 +1,152 @@
+# Safety Rover Configuration (Shared)
+# Person A (Vision): Updates ppe_thresholds, low_visibility_std_threshold, glare_pixel_threshold
+# Person B (Navigation): Updates lidar_port, zone_polygons
+# Person C: Read-only reference
+
+# ============================================================================
+# NETWORK CONFIGURATION
+# ============================================================================
+network:
+  rover_pi_ip: "192.168.1.100"
+  rosbridge_websocket_port: 9090
+  cam_mjpeg_port: 5800
+  dashboard_port: 5000
+
+# ============================================================================
+# HARDWARE PINS & PORTS (Raspberry Pi GPIO)
+# ============================================================================
+hardware:
+  lidar:
+    port: "/dev/ttyUSB0"
+    baudrate: 115200
+    frame_id: "lidar_link"
+  
+  hcsr04_ultrasonic:
+    trigger_pin: 17      # GPIO17
+    echo_pin: 27         # GPIO27
+    max_distance_m: 4.0
+  
+  ruuvi_tag:
+    ble_address: "DB:43:23:AC:12:34"  # Example; will vary per tag
+    read_interval_seconds: 5
+
+# ============================================================================
+# VISION SYSTEM (Person A - oak_pipeline, tracker_ppe, ppe_classifier)
+# ============================================================================
+vision:
+  oak_d:
+    frame_width: 320
+    frame_height: 320
+    fps: 30
+    rgb_stereo_aligned: true
+    spatial_depth:
+      median_filter: true
+      left_right_check: true
+      extended_mode: false
+  
+  preprocessing:
+    clahe_enabled: true
+    clahe_clip_limit: 2.0
+    clahe_tile_size: 8
+    apply_bilateral_filter: false
+  
+  detection:
+    confidence_threshold: 0.45
+    nms_iou_threshold: 0.5
+    max_detections: 50
+    depth_max_valid_m: 6.0
+    depth_invalid_value: 0.0
+  
+  detection_flags:
+    low_visibility_std_threshold: 35     # std(frame) < this → low visibility
+    glare_detection_enabled: true
+    glare_bright_pixel_threshold: 0.15   # % of pixels with brightness > 245
+  
+  bytetrack:
+    iou_match_threshold: 0.3
+    min_frames_for_confirmation: 2
+    max_lost_frames: 15
+    kalman_process_noise_position: 1.0
+    kalman_process_noise_velocity: 0.1
+    kalman_process_noise_size: 1.0
+    kalman_measurement_noise: 1.0
+  
+  line_crossing:
+    line_y_ratio: 0.55                  # 55% of frame height
+    cooldown_seconds: 5
+  
+  ppe_classification:
+    classification_interval_frames: 5   # Run every 5th frame
+    confidence_threshold: 0.65
+    suit_confidence_threshold: 0.65
+    shield_confidence_threshold: 0.60   # Lower for heuristic override
+    gloves_confidence_threshold: 0.65
+    shield_heuristic_enabled: true      # Use HoughLines if uncertain
+  
+  face_blurring:
+    enabled: true
+    blur_kernel_size: 99
+    blur_sigma: 30.0
+    blur_region_ratio: 0.3              # Top 30% of each bbox
+
+# ============================================================================
+# ZONE DEFINITIONS (Pixel coords on ROS/SLAM map frame)
+# ============================================================================
+zones:
+  zone_a:
+    name: "Hazardous Assembly"
+    polygon: [[0, 0], [100, 0], [100, 150], [0, 150]]
+    ppe_requirements: ["suit", "shield", "gloves"]
+    critical_item: "shield"
+    warning_item: "gloves"
+  
+  zone_b:
+    name: "Equipment Area"
+    polygon: [[101, 0], [320, 0], [320, 320], [101, 320]]
+    ppe_requirements: ["gloves"]
+    critical_item: null
+    warning_item: "gloves"
+  
+  zone_transit:
+    name: "Pathways"
+    polygon: null                        # Everywhere else
+    ppe_requirements: []
+    critical_item: null
+    warning_item: null
+
+# ============================================================================
+# ALERT & COMPLIANCE (Shared with Person B for escalation logic)
+# ============================================================================
+alerts:
+  alert_cooldown_seconds: 10            # Min time between repeat alerts for same track
+  critical_alert_cooldown_seconds: 3    # More frequent for CRITICAL
+  environment_escalation_enabled: true
+  
+  environment_thresholds:
+    temp_alert_celsius: 45.0            # Trigger WARNING if > 45°C
+    temp_critical_celsius: 50.0         # Escalate to CRITICAL if > 50°C
+    humidity_alert_pct: 85.0            # Trigger WARNING if > 85% humidity
+    humidity_critical_pct: 95.0         # Escalate to CRITICAL if > 95%
+  
+  alert_retention_minutes: 30           # Keep 30-min history for stats
+
+# ============================================================================
+# LOGGING & DEBUG
+# ============================================================================
+logging:
+  level: "INFO"                         # DEBUG, INFO, WARNING, ERROR
+  log_detections: true
+  log_tracks: true
+  log_ppe_classifications: false        # Verbose; disable in production
+  log_frame_flags: true
+  frame_metadata_interval: 30           # Log every Nth frame
+
+# ============================================================================
+# PERFORMANCE & RESOURCE CONSTRAINTS
+# ============================================================================
+performance:
+  max_frame_latency_ms: 100
+  max_memory_mb: 500
+  target_fps: 25
+  compress_frame_quality: 85            # JPEG quality 0-100 for MJPEG
+  compress_frame_interval_hz: 10        # Send compressed frames at 10 Hz

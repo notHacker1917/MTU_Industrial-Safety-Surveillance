@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>vision_pkg</name>
+  <version>0.1.0</version>
+  <description>DepthAI OAK-D vision pipeline with ByteTrack and PPE compliance monitoring</description>
+  <maintainer email="team@safety-rover.local">Safety Rover Team</maintainer>
+  <license>MIT</license>
+
+  <author email="person.a@team.local">Person A</author>
+
+  <!-- ROS2 Jazzy dependencies -->
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  
+  <!-- Build and test dependencies -->
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <test_depend>pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake_python</build_type>
+  </export>
+</package>
