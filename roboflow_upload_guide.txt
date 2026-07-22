@@ -1,0 +1,271 @@
+================================================================================
+A7: ROBOFLOW PPE CLASSIFIER TRAINING GUIDE
+================================================================================
+
+OBJECTIVE:
+Convert collected PPE training data into a TensorFlow Lite model for edge
+inference on Raspberry Pi 5. Uses Roboflow AutoML for multi-label classification.
+
+================================================================================
+STEP 1: COLLECT DATA (Already Done)
+================================================================================
+
+Run on your laptop:
+  python collect_ppe_data.py
+
+Keys:
+  S = Suit (YES)        | N = No Suit (NO)
+  H = Shield (YES)      | X = No Shield (NO)
+  G = Gloves (YES)      | B = No Gloves (NO)
+  SPACE = Capture       | Q = Quit
+
+Target: 40 images per class combination
+  - Total combinations: 3 * 3 * 3 = 27 (all yes, all no, mixed)
+  - Full dataset: 40 * 27 = 1,080 images minimum
+
+Data saved to: data/ppe_training/{label_combo}/ (e.g., suit_shield_gloves/)
+
+Note: If using mock pipeline (no hardware), labels are simulated.
+Recommendation: Use real OAK-D camera on Raspberry Pi or USB camera on laptop.
+
+================================================================================
+STEP 2: CREATE ROBOFLOW ACCOUNT & PROJECT
+================================================================================
+
+2.1. Go to: https://app.roboflow.com/
+
+2.2. Sign up or log in (free account OK for this project)
+
+2.3. Create new project:
+  - Click "Create Project" or "New Dataset"
+  - Project name: "PPE_Detector" or similar
+  - Task type: SELECT "Multi-Label Classification"
+    (NOT single-label object detection — must be multi-label)
+  - Annotation format: "Auto-detect"
+  - Click "Create"
+
+================================================================================
+STEP 3: UPLOAD DATA
+================================================================================
+
+3.1. In Roboflow project dashboard, click "Upload Images"
+
+3.2. Upload folder: data/ppe_training/
+  - Select all subfolders (suit_shield_gloves, no_suit_shield_gloves, etc.)
+  - Roboflow will auto-detect folder names as labels
+
+3.3. After upload, Roboflow will ask you to annotate (skip if auto-labeled):
+  - Our images are already labeled by folder names
+  - Review a few to verify labels are correct:
+    - Images in suit_shield_gloves/ → suit=1, shield=1, gloves=1
+    - Images in no_suit_shield_gloves/ → suit=0, shield=1, gloves=1
+    - etc.
+
+3.4. Verify multi-label format:
+  - Each image can have MULTIPLE labels simultaneously
+  - Example: [suit=True, shield=False, gloves=True]
+  - NOT [suit OR shield OR gloves] (single-label)
+
+================================================================================
+STEP 4: CONFIGURE DATASET & PREPROCESSING
+================================================================================
+
+4.1. Click "Dataset" tab (after upload complete)
+
+4.2. Verify image count by class:
+  - Should see ~40 images per label combination
+  - If unbalanced, collect more data
+
+4.3. Preprocessing (optional but recommended):
+  - Auto-orient: YES
+  - Resize: 224x224 (MobileNetV3 standard)
+  - Augmentation: Slight rotation (±10°), brightness (±10%)
+
+4.4. Generate Dataset Version:
+  - Roboflow will create train/val/test split (80/10/10)
+  - Click "Generate" → Choose split → "Create"
+
+================================================================================
+STEP 5: TRAIN MODEL (AutoML)
+================================================================================
+
+5.1. Click "Train" tab
+
+5.2. Select training method: "Roboflow AutoML"
+
+5.3. Select model architecture: "MobileNetV3 (Small)"
+  - Lightweight (suitable for Pi 5)
+  - Fast inference (~5-10ms per image)
+  - ~3MB TFLite file
+
+5.4. Training parameters:
+  - Epochs: 40 (default, OK for multi-label)
+  - Batch size: Auto
+  - Loss function: Binary Crossentropy (multi-label)
+  - Optimizer: Adam
+
+5.5. Click "Start Training"
+  - Wait 15-30 minutes for training to complete
+  - Monitor progress in Roboflow dashboard
+  - Check validation metrics (aim for >90% mAP per label)
+
+================================================================================
+STEP 6: EVALUATE MODEL
+================================================================================
+
+6.1. After training, Roboflow shows metrics:
+  - Precision per label (suit, shield, gloves)
+  - Recall per label
+  - F1 score per label
+  - mAP (mean average precision)
+
+6.2. If metrics are poor (<85% per label):
+  - Collect more data (100+ images per class)
+  - Improve label quality (ensure accurate suit/shield/gloves labels)
+  - Retrain with adjusted hyperparameters
+
+================================================================================
+STEP 7: EXPORT TO TFLITE (INT8 QUANTIZED)
+================================================================================
+
+7.1. Click "Versions" tab → Select latest version
+
+7.2. Click "Export" button
+
+7.3. Choose export format:
+  - Format: "TensorFlow Lite"
+  - Quantization: "INT8" (reduced model size & inference latency)
+  - Target device: "Edge TPU / MyriadX" (optional, but good for VPU)
+
+7.4. Click "Export"
+  - Roboflow generates and downloads .zip
+
+7.5. Extract downloaded .zip:
+  - Look for: model.tflite (~3-5 MB)
+  - Also included: labels.txt (should be: suit, shield, gloves)
+
+================================================================================
+STEP 8: DEPLOY TO RASPBERRY PI
+================================================================================
+
+8.1. On your laptop, copy model to Pi:
+  scp model.tflite ubuntu@<PI_IP>:~/safety_rover/models/
+
+8.2. SSH into Pi:
+  ssh ubuntu@<PI_IP>
+  cd ~/safety_rover
+
+8.3. Verify model placement:
+  ls -lh models/model.tflite
+  # Should show ~3-5 MB file
+
+8.4. Update ppe_classifier.py to use real model:
+  - Remove use_placeholder=True
+  - Update model_path to: models/model.tflite
+  - Ensure tflite_runtime installed: pip install tflite-runtime
+
+8.5. Test classifier:
+  python ppe_classifier.py test_image.jpg models/model.tflite
+
+  Expected output:
+    [OK] Loaded TFLite model: models/model.tflite
+    Suit: True (conf: 0.823)
+    Shield: True (conf: 0.792)
+    Gloves: False (conf: 0.341)
+    All Compliant: False
+    Inference Time: 8.2 ms
+
+================================================================================
+STEP 9: INTEGRATE INTO PIPELINE
+================================================================================
+
+9.1. Update tracker_ppe.py to use real classifier:
+  from ppe_classifier import PPEClassifier
+  ppe = PPEClassifier("models/model.tflite", conf_threshold=0.65)
+  # Use placeholder=False (default)
+
+9.2. Run full pipeline with PPE enforcement:
+  DEBUG=1 python oak_pipeline.py
+
+  Expected:
+    [INFO] OAK-D found: <MxID>
+    [INFO] Loaded TFLite model: models/model.tflite
+    [INFO] Pipeline started
+    [DETECTIONS] Found 1 person(s):
+      [0] Suit: True, Shield: True, Gloves: True, Conf: 0.85
+    [PPE] Person #1 is COMPLIANT (Zone A)
+
+9.3. Launch full ROS2 vision stack (on Pi):
+  bash launch_all.sh
+  # Should include PPE classification in /vision/alerts topic
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Q: "Model accuracy is low (<80%)"
+A: 1. Collect more diverse data (different lighting, angles, people)
+   2. Ensure labels are correct (manually verify 10% of data)
+   3. Retrain with longer epochs (100 instead of 40)
+   4. Use data augmentation (flip, rotate, brightness)
+
+Q: "Inference is slow (>30ms per image)"
+A: 1. Check model quantization (should be INT8)
+   2. Reduce input size to 192x192 (if model supports)
+   3. Use GPU acceleration on Pi (experimental: TFLite GPU delegate)
+
+Q: "Model not loading on Pi"
+A: 1. Verify path: ls -lh models/model.tflite
+   2. Check tflite_runtime: python -c "from tflite_runtime.interpreter import Interpreter"
+   3. Ensure model was exported from Roboflow (not raw training checkpoint)
+
+Q: "Predictions are always None/null"
+A: 1. Model file corrupted → re-download from Roboflow
+   2. Input image too small (<50×50px) → check preprocessing
+   3. Check interpreter output tensors: verify 3 outputs for multi-label
+
+================================================================================
+MODEL DEPLOYMENT CHECKLIST
+================================================================================
+
+[ ] Data collected: data/ppe_training/ (1000+ images, 27 classes)
+[ ] Roboflow account created and project set up
+[ ] Images uploaded and auto-labeled (multi-label format verified)
+[ ] Model trained (40 epochs, MobileNetV3-Small, INT8 quantization)
+[ ] Metrics reviewed (>85% per label)
+[ ] Model exported as TFLite INT8
+[ ] model.tflite copied to Pi: ~/safety_rover/models/
+[ ] tflite_runtime installed on Pi
+[ ] ppe_classifier.py updated with model path
+[ ] Single image classification test passed (8-15ms inference)
+[ ] Full pipeline test passed (oak_pipeline.py shows PPE labels)
+[ ] ROS2 vision node launched (check /vision/alerts for PPE compliance)
+[ ] Dashboard displays PPE status in real-time
+
+================================================================================
+NEXT STEPS (AFTER MODEL DEPLOYED)
+================================================================================
+
+1. Monitor false negatives (people without PPE classified as compliant)
+   - If high, re-collect data with more non-compliant people
+   - Retrain with higher confidence threshold (0.75+)
+
+2. Collect hard negatives (edge cases: partially visible gloves, reflective shields)
+   - Re-run collect_ppe_data.py on different people/environments
+   - Augment dataset with these difficult cases
+   - Retrain for robustness
+
+3. Performance tuning
+   - Measure actual latency on Pi 5 (should be <15ms for 320x320)
+   - If >30ms, consider model pruning or quantization-aware training
+
+4. Deploy to production
+   - Set alert thresholds in ppe_rules.py
+   - Configure zone rules (which zones require which PPE)
+   - Launch rosbridge_server for live dashboard monitoring
+
+================================================================================
+END OF GUIDE
+================================================================================
+Created: 2025-06-16
+For questions: Check tracker_ppe.py and ppe_classifier.py comments (FIX A5-A9)
