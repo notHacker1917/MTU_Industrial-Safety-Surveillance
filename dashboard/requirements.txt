@@ -1,0 +1,7 @@
+flask==2.3.3
+flask-socketio==5.3.4
+flask-cors==4.0.0
+eventlet==0.33.3
+websocket-client==1.6.2
+requests==2.31.0
+python-socketio==5.9.0

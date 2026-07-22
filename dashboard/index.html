@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPE Compliance Dashboard</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+            background: #0f1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            height: 100vh;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .panel {
+            background: #1a1d27;
+            border: 1px solid #2d3148;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .panel h2 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            color: #8b949e;
+        }
+
+        /* ====== CAMERA PANEL ====== */
+        #camera-panel {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        #cam {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #0d1117;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .badge {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge.zone-a {
+            background: rgba(0, 212, 170, 0.2);
+            color: #00d4aa;
+            border: 1px solid rgba(0, 212, 170, 0.4);
+        }
+
+        .badge.zone-b {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .badge.zone-transit {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(107, 114, 128, 0.4);
+        }
+
+        .badge.count {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .low-visibility-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(249, 115, 22, 0.9);
+            color: #fff;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            display: none;
+            z-index: 20;
+        }
+
+        .low-visibility-banner.active {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .critical-flash {
+            animation: critical-flash 2s ease-out;
+        }
+
+        @keyframes critical-flash {
+            0% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+            100% { box-shadow: 0 0 0px rgba(239, 68, 68, 0); }
+        }
+
+        /* ====== STATUS PANEL ====== */
+        #status-panel {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .status-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .zone-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            height: 80px;
+            border-radius: 8px;
+            background: #0d1117;
+        }
+
+        .zone-display.zone-a {
+            background: rgba(0, 212, 170, 0.1);
+            color: #00d4aa;
+        }
+
+        .zone-display.zone-b {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .zone-display.zone-transit {
+            background: rgba(107, 114, 128, 0.1);
+            color: #9ca3af;
+        }
+
+        .count-display {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 700;
+            color: #00d4aa;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(0, 212, 170, 0.3);
+            border-radius: 8px;
+        }
+
+        .compliance-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: #0d1117;
+            border-radius: 8px;
+        }
+
+        .compliance-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            position: relative;
+            background: conic-gradient(
+                #00d4aa 0deg,
+                #00d4aa 180deg,
+                #2d3148 180deg
+            );
+        }
+
+        .compliance-circle.warning {
+            background: conic-gradient(
+                #f59e0b 0deg,
+                #f59e0b 135deg,
+                #2d3148 135deg
+            );
+        }
+
+        .compliance-circle.critical {
+            background: conic-gradient(
+                #ef4444 0deg,
+                #ef4444 90deg,
+                #2d3148 90deg
+            );
+        }
+
+        .compliance-circle::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            background: #1a1d27;
+            border-radius: 50%;
+        }
+
+        .compliance-circle span {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .connection-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse-dot 1.5s infinite;
+            align-self: center;
+        }
+
+        .connection-indicator.connected {
+            background: #00d4aa;
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ====== ALERT LOG ====== */
+        #alert-panel {
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #alert-log {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 8px;
+            padding-right: 8px;
+        }
+
+        #alert-log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #alert-log::-webkit-scrollbar-track {
+            background: #0d1117;
+            border-radius: 3px;
+        }
+
+        #alert-log::-webkit-scrollbar-thumb {
+            background: #2d3148;
+            border-radius: 3px;
+        }
+
+        .alert-card {
+            border-left: 4px solid #00d4aa;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            font-size: 12px;
+            animation: slide-in 0.3s ease-out;
+        }
+
+        .alert-card.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .alert-card.critical {
+            border-left-color: #ef4444;
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-time {
+            color: #8b949e;
+            font-size: 11px;
+        }
+
+        .alert-track {
+            font-weight: 600;
+            color: #c9d1d9;
+            margin: 4px 0;
+        }
+
+        .ppe-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 6px 0;
+        }
+
+        .ppe-pill {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .alert-depth {
+            color: #8b949e;
+            margin-top: 4px;
+        }
+
+        .alert-controls {
+            padding-top: 12px;
+            border-top: 1px solid #2d3148;
+            text-align: right;
+        }
+
+        .clear-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* ====== STAT CARDS ====== */
+        #stats-panel {
+            grid-column: 2;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: #0d1117;
+            border: 1px solid #2d3148;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b949e;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        /* ====== RECONNECT BANNER ====== */
+        .reconnect-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(249, 115, 22, 0.9);
+            color: #fff;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            z-index: 1000;
+        }
+
+        .reconnect-banner.active {
+            display: block;
+            animation: slide-down 0.3s ease-out;
+        }
+
+        @keyframes slide-down {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 1280px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+            }
+
+            #camera-panel {
+                grid-column: 1;
+                grid-row: 1;
+                height: 300px;
+            }
+
+            #status-panel {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            #alert-panel {
+                grid-column: 1;
+                grid-row: 3;
+                height: 250px;
+            }
+
+            #stats-panel {
+                grid-column: 1;
+                grid-row: 4;
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reconnect-banner" id="reconnect-banner">
+        ⚠ Reconnecting...
+    </div>
+
+    <div class="container">
+        <!-- CAMERA PANEL -->
+        <div class="panel" id="camera-panel">
+            <div class="low-visibility-banner" id="visibility-banner">⚠ LOW VISIBILITY</div>
+            <img id="cam" src="/video_feed" alt="Camera Feed">
+            <div class="camera-overlay">
+                <div class="badge zone-a" id="zone-badge">Zone ?</div>
+                <div class="badge count" id="count-badge">Inside: 0</div>
+            </div>
+        </div>
+
+        <!-- STATUS PANEL -->
+        <div class="panel" id="status-panel">
+            <h2>Status</h2>
+            <div class="status-section">
+                <div class="zone-display zone-a" id="zone-display">Zone?</div>
+            </div>
+            <div class="status-section">
+                <div style="text-align: center; color: #8b949e; font-size: 12px;">Currently Inside</div>
+                <div class="count-display" id="count-display">0</div>
+            </div>
+            <div class="compliance-section">
+                <div style="text-align: center; color: #8b949e; font-size: 12px;">Compliance Rate</div>
+                <div class="compliance-circle" id="compliance-circle">
+                    <span>100%</span>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: auto;">
+                <div style="color: #8b949e; font-size: 11px; margin-bottom: 6px;">Connection</div>
+                <div class="connection-indicator connected" id="connection-indicator"></div>
+            </div>
+        </div>
+
+        <!-- ALERT LOG PANEL -->
+        <div class="panel" id="alert-panel">
+            <h2>Alert Log</h2>
+            <div id="alert-log"></div>
+            <div class="alert-controls">
+                <button class="clear-btn" onclick="clearAlertLog()">Clear Log</button>
+            </div>
+        </div>
+
+        <!-- STATS PANEL -->
+        <div id="stats-panel">
+            <div class="stat-card">
+                <div class="stat-label">Total Entered</div>
+                <div class="stat-value" id="stat-entered">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Currently Inside</div>
+                <div class="stat-value" id="stat-inside">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Compliance Rate</div>
+                <div class="stat-value" id="stat-compliance">100%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Critical Alerts</div>
+                <div class="stat-value" id="stat-critical">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====== AUDIO CONTEXT ======
+        let audioContext = null;
+        let audioUnlocked = false;
+
+        function unlockAudio() {
+            if (!audioUnlocked && audioContext === null) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioUnlocked = true;
+            }
+        }
+
+        // Unlock audio on first interaction
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+
+        function playAlertSound() {
+            if (!audioUnlocked || !audioContext) return;
+
+            try {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.warn("Audio playback failed:", e);
+            }
+        }
+
+        // ====== SOCKETIO ======
+        const socket = io();
+
+        socket.on("connect", () => {
+            console.log("Connected to dashboard server");
+            document.getElementById("reconnect-banner").classList.remove("active");
+        });
+
+        socket.on("disconnect", () => {
+            console.log("Disconnected from dashboard server");
+            document.getElementById("reconnect-banner").classList.add("active");
+        });
+
+        socket.on("connection_status", (data) => {
+            const indicator = document.getElementById("connection-indicator");
+            if (data.pi_connected && data.camera_ok) {
+                indicator.classList.add("connected");
+            } else {
+                indicator.classList.remove("connected");
+            }
+        });
+
+        // ====== DETECTIONS ======
+        socket.on("detection_update", (data) => {
+            const peopleInside = data.people_inside || 0;
+            const zone = data.zone || "UNKNOWN";
+
+            // Update badges
+            document.getElementById("count-badge").textContent = `Inside: ${peopleInside}`;
+            updateZoneBadge(zone);
+
+            // Update displays
+            document.getElementById("count-display").textContent = peopleInside;
+            updateZoneDisplay(zone);
+        });
+
+        // ====== FRAME META ======
+        socket.on("frame_meta_update", (data) => {
+            const zone = data.zone || "UNKNOWN";
+            const lowVisibility = data.low_visibility || false;
+
+            // Update visibility banner
+            const banner = document.getElementById("visibility-banner");
+            if (lowVisibility) {
+                banner.classList.add("active");
+            } else {
+                banner.classList.remove("active");
+            }
+
+            // Update zone
+            updateZoneBadge(zone);
+            updateZoneDisplay(zone);
+        });
+
+        // ====== ALERTS ======
+        socket.on("alert_event", (data) => {
+            const alertLevel = data.alert_level || "OK";
+
+            if (alertLevel !== "OK") {
+                // Play sound for non-OK alerts
+                playAlertSound();
+
+                // Flash camera panel
+                const cameraPanel = document.getElementById("camera-panel");
+                cameraPanel.classList.add("critical-flash");
+                setTimeout(() => cameraPanel.classList.remove("critical-flash"), 2000);
+
+                // Add to alert log
+                addAlertToLog(data);
+            }
+        });
+
+        // ====== STATS ======
+        socket.on("stats_update", (data) => {
+            document.getElementById("stat-entered").textContent = data.total_entered || 0;
+            document.getElementById("stat-inside").textContent = data.people_inside || 0;
+            document.getElementById("stat-compliance").textContent = data.compliance_pct.toFixed(1) + "%";
+            document.getElementById("stat-critical").textContent = data.critical_alerts_30min || 0;
+
+            // Update compliance circle
+            updateComplianceCircle(data.compliance_pct);
+        });
+
+        // ====== ZONE HELPERS ======
+        function updateZoneBadge(zone) {
+            const badge = document.getElementById("zone-badge");
+            badge.className = "badge";
+
+            if (zone === "A") {
+                badge.classList.add("zone-a");
+                badge.textContent = "Zone A";
+            } else if (zone === "B") {
+                badge.classList.add("zone-b");
+                badge.textContent = "Zone B";
+            } else if (zone === "TRANSIT") {
+                badge.classList.add("zone-transit");
+                badge.textContent = "Transit";
+            } else {
+                badge.classList.add("zone-transit");
+                badge.textContent = "Unknown";
+            }
+        }
+
+        function updateZoneDisplay(zone) {
+            const display = document.getElementById("zone-display");
+            display.className = "zone-display";
+
+            if (zone === "A") {
+                display.classList.add("zone-a");
+                display.textContent = "Zone A";
+            } else if (zone === "B") {
+                display.classList.add("zone-b");
+                display.textContent = "Zone B";
+            } else if (zone === "TRANSIT") {
+                display.classList.add("zone-transit");
+                display.textContent = "Transit";
+            } else {
+                display.classList.add("zone-transit");
+                display.textContent = "Unknown";
+            }
+        }
+
+        // ====== COMPLIANCE CIRCLE ======
+        function updateComplianceCircle(compliancePct) {
+            const circle = document.getElementById("compliance-circle");
+            circle.className = "compliance-circle";
+
+            if (compliancePct >= 90) {
+                // Green
+                circle.style.background = `conic-gradient(#00d4aa 0deg, #00d4aa ${compliancePct * 3.6}deg, #2d3148 ${compliancePct * 3.6}deg)`;
+            } else if (compliancePct >= 70) {
+                // Yellow
+                circle.classList.add("warning");
+                circle.style.background = `conic-gradient(#f59e0b 0deg, #f59e0b ${compliancePct * 3.6}deg, #2d3148 ${compliancePct * 3.6}deg)`;
+            } else {
+                // Red
+                circle.classList.add("critical");
+                circle.style.background = `conic-gradient(#ef4444 0deg, #ef4444 ${compliancePct * 3.6}deg, #2d3148 ${compliancePct * 3.6}deg)`;
+            }
+
+            circle.innerHTML = `<span>${compliancePct.toFixed(1)}%</span>`;
+        }
+
+        // ====== ALERT LOG ======
+        function addAlertToLog(alert) {
+            const log = document.getElementById("alert-log");
+
+            // Create card
+            const card = document.createElement("div");
+            card.className = "alert-card";
+
+            const alertLevel = alert.alert_level || "OK";
+            if (alertLevel === "WARNING") {
+                card.classList.add("warning");
+            } else if (alertLevel === "CRITICAL") {
+                card.classList.add("critical");
+            }
+
+            // Time
+            const now = new Date(alert.timestamp * 1000);
+            const timeStr = now.toLocaleTimeString();
+
+            // Missing PPE
+            const missingPpe = alert.missing_ppe || [];
+            const pillsHtml = missingPpe
+                .map(item => `<div class="ppe-pill">${item}</div>`)
+                .join("");
+
+            card.innerHTML = `
+                <div class="alert-time">${timeStr}</div>
+                <div class="alert-track">Track #${alert.track_id} - ${alertLevel}</div>
+                <div class="ppe-pills">${pillsHtml}</div>
+                <div class="alert-depth">Zone: ${alert.zone} | Depth: ${alert.depth_m.toFixed(2)}m</div>
+            `;
+
+            log.insertBefore(card, log.firstChild);
+
+            // Limit to 50 entries
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function clearAlertLog() {
+            document.getElementById("alert-log").innerHTML = "";
+        }
+
+        // ====== INITIALIZATION ======
+        console.log("Dashboard loaded and ready");
+    </script>
+</body>
+</html>
