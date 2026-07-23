@@ -4,7 +4,7 @@ Complete ROS2 vision pipeline + web dashboard for real-time person detection, mu
 
 ## Complete System Architecture
 
-```
+``` 
                     RASPBERRY PI 5
          ┌──────────────────────────────────┐
          │   OAK-D Camera (MyriadX VPU)     │
