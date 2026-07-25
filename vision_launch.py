@@ -2,7 +2,7 @@
 ROS2 Launch File for Vision Node
 Launches the VisionNode with configurable parameters and optional mock mode
 """
-
+     
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, LogInfo
 from launch.conditions import IfCondition
