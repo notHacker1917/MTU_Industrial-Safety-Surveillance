@@ -8,7 +8,7 @@ Complete ROS2 vision pipeline + web dashboard for real-time person detection, mu
                     RASPBERRY PI 5
          ┌──────────────────────────────────┐
          │   OAK-D Camera (MyriadX VPU)     │
-         │     ↓                             │
+         │     ↓                             │ 
          │   oak_pipeline.py (YOLO26n)     │
          │     ↓                             │
          │   tracker_ppe.py (ByteTrack)    │
