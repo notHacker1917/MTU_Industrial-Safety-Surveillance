@@ -7,7 +7,7 @@ Saves to data/ppe_training/{label_combo}/ directory
 """ 
  
 import cv2 
-import os
+import os 
 import sys
 from pathlib import Path
 from datetime import datetime
