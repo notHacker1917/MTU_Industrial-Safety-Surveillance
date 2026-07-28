@@ -15,7 +15,7 @@ def main():
     print("PPE COMPLIANCE TRACKING SYSTEM - VISUAL DEMO")
     print("=" * 60)
     print()
-
+ 
     # Initialize pipeline and tracker
     pipeline = MockOakDPipeline(blob_path="mock")  # Mock path for mock pipeline
     tracker = TrackerPPE(
