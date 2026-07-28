@@ -11,7 +11,7 @@ from pathlib import Path
 
 def check_dependencies():
     """Check if ultralytics is installed."""
-    try:
+    try: 
         import ultralytics
         print("[OK] ultralytics installed")
         return True
