@@ -8,19 +8,19 @@ Complete ROS2 vision pipeline + web dashboard for real-time person detection, mu
                     RASPBERRY PI 5
          ┌──────────────────────────────────┐
          │   OAK-D Camera (MyriadX VPU)     │
-         │     ↓                             │ 
-         │   oak_pipeline.py (YOLO26n)     │
-         │     ↓                             │
-         │   tracker_ppe.py (ByteTrack)    │
-         │     ↓                             │
-         │   ppe_classifier.py (TFLite)    │
-         │     ↓                             │
-         │   ros2_vision_node.py           │
-         │     ↓                             │
+         │     ↓                            │ 
+         │   oak_pipeline.py (YOLO26n)      │
+         │     ↓                            │
+         │   tracker_ppe.py (ByteTrack)     │
+         │     ↓                            │
+         │   ppe_classifier.py (TFLite)     │
+         │     ↓                            │
+         │   ros2_vision_node.py            │
+         │     ↓                            │
          │  ROS2 Topics:                    │
-         │  - /vision/detections (15 Hz)   │
-         │  - /vision/alerts (events)      │
-         │  - /vision/annotated_frame      │
+         │  - /vision/detections (15 Hz)    │
+         │  - /vision/alerts (events)       │
+         │  - /vision/annotated_frame       │
          └──────────────────────────────────┘
                   ↓ WebSocket
          ┌──────────────────────────────────┐
@@ -31,8 +31,8 @@ Complete ROS2 vision pipeline + web dashboard for real-time person detection, mu
          ┌──────────────────────────────────┐
          │  Dashboard Server (Flask)        │
          │  - /vision/detections proxy      │
-         │  - /video_feed (MJPEG)          │
-         │  - SocketIO events              │
+         │  - /video_feed (MJPEG)           │
+         │  - SocketIO events               │
          └──────────────────────────────────┘
                   ↓ HTTP/WS
             BROWSER (Port 5000)
@@ -298,24 +298,24 @@ Published at 10 Hz (compressed) on `/vision/annotated_frame`:
 
 ## Key Features
 
-✅ **Privacy-First**
+**Privacy-First**
 - Face blurring with Gaussian kernel (99×99, σ=30)
 - No biometric storage, session-only track IDs
 - Track IDs reset on program restart
 
-✅ **Edge Optimized**
+**Edge Optimized**
 - All inference on OAK-D VPU (MyriadX), zero Pi CPU overhead
 - TFLite model (Int8 quantized, ~3MB)
 - ByteTrack with IoU-only matching (no embeddings)
 - PPE classification cached, runs every 5 frames
 
-✅ **ROS2 Integrated**
+**ROS2 Integrated**
 - Pub/sub architecture for modular dashboard
 - Environment fusion with RuuviTag sensors
 - Alert deduplication and severity escalation
 - Compressed frame streaming (10 Hz)
 
-✅ **Web Dashboard (NEW)**
+**Web Dashboard (NEW)**
 - Real-time monitoring from any browser (no install needed)
 - Single-page app with live camera feed
 - Real-time tracking visualization
@@ -324,7 +324,7 @@ Published at 10 Hz (compressed) on `/vision/annotated_frame`:
 - Responsive design (dark theme)
 - Works on Chrome, Firefox, Edge
 
-✅ **Robust**
+**Robust**
 - Kalman filter handles occlusion (15 frame TTL)
 - Line-crossing cooldown prevents double-counting
 - Graceful degradation on hardware/model failures
