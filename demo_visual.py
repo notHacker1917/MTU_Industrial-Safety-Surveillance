@@ -12,7 +12,7 @@ from ppe_rules import DEFAULT_ZONE_RULES
 
 def main():
     print("=" * 60)
-    print("PPE COMPLIANCE TRACKING SYSTEM - VISUAL DEMO")
+    print("PPE COMPLIANCE TRACKING SYSTEM - VISUAL DEMO") 
     print("=" * 60)
     print()
  
