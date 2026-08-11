@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-
+ 
 try:
     from oak_pipeline_mock import OakDPipeline
     print("[INFO] Using mock OAK-D pipeline (hardware unavailable)")
