@@ -4,7 +4,7 @@ A7: Live PPE Data Collection Script
 Captures frames from OAK-D RGB camera and labels for Roboflow training.
 Press keys to label: S/N (suit), H/X (shield), G/B (gloves), SPACE (capture), Q (quit)
 Saves to data/ppe_training/{label_combo}/ directory
-""" 
+"""  
  
 import cv2 
 import os 
