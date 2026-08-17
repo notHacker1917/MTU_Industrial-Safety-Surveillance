@@ -23,7 +23,7 @@ except ImportError:
     except ImportError:
         print("[ERROR] OAK-D pipeline not found")
         print("[INFO] Using OpenCV camera as fallback")
-        OakDPipeline = None
+        OakDPipeline = None 
 
 
 class PPEDataCollector:
