@@ -1,6 +1,6 @@
 # DepthAI PPE Compliance Monitoring System
 
-Complete ROS2 vision pipeline + web dashboard for real-time person detection, multi-object tracking, and PPE compliance monitoring on Raspberry Pi 5 + OAK-D camera, with remote monitoring on laptop via browser.
+Complete ROS2 vision pipeline + web dashboard for real-time person detection, multi-object tracking, and PPE compliance monitoring on Raspberry Pi 5 + OAK-D camera, with remote monitoring on laptop via browser. 
 
 ## Complete System Architecture   
    
