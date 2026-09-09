@@ -1,6 +1,6 @@
 """
 PPE (Personal Protective Equipment) Compliance Rules Configuration
-Defines zone-specific safety requirements and alert thresholds.
+Defines zone-specific safety requirements and alert thresholds. 
 """
 
 # Default zone rules: defines required PPE for each zone
