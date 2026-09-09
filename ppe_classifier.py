@@ -13,7 +13,7 @@ from typing import Dict, Optional, Any
 
 try:
     from tflite_runtime.interpreter import Interpreter
-    TFLITE_AVAILABLE = True
+    TFLITE_AVAILABLE = True 
 except ImportError:
     TFLITE_AVAILABLE = False
     Interpreter = None
