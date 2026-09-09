@@ -9,7 +9,7 @@ import numpy as np
 from tracker_ppe import TrackerPPE, Track
 from oak_pipeline_mock import MockOakDPipeline
 from ppe_rules import DEFAULT_ZONE_RULES
-
+ 
 def main():
     print("=" * 60)
     print("PPE COMPLIANCE TRACKING SYSTEM - VISUAL DEMO") 
