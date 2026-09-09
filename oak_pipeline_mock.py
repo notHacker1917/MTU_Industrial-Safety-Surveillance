@@ -6,7 +6,7 @@ Used as fallback when depthai SDK is not installed
 
 import numpy as np
 import cv2
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional 
 import random
 
 
