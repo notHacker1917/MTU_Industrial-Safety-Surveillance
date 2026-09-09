@@ -9,7 +9,7 @@ Author: Computer Vision Expert | Target: Raspberry Pi 5 + OAK-D MyriadX
 
 import subprocess
 import sys
-import os
+import os 
 import json
 from pathlib import Path
 
