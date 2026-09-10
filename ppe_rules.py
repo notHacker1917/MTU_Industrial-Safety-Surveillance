@@ -3,7 +3,7 @@ PPE (Personal Protective Equipment) Compliance Rules Configuration
 Defines zone-specific safety requirements and alert thresholds. 
 """
 
-# Default zone rules: defines required PPE for each zone
+# Default zone rules: defines required PPE for each zone 
 DEFAULT_ZONE_RULES = {
     "A": {
         "name": "Tank Zone (High Risk)",
