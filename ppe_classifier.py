@@ -5,7 +5,7 @@ Includes face shield heuristic fallback for transparent shields
 """
 
 import cv2
-import numpy as np
+import numpy as np 
 import time
 import sys
 import random
