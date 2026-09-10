@@ -3,7 +3,7 @@ DepthAI OAK-D Pipeline for Real-Time Person Detection with Depth
 Author: Computer Vision Expert
 Hardware: OAK-D camera on Raspberry Pi 5
 Compute: YOLO26n inference on MyriadX VPU
-"""
+""" 
 
 import cv2
 import depthai as dai
