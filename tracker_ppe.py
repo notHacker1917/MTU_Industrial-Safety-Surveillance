@@ -4,7 +4,7 @@ Uses ByteTrack (IoU-based + Kalman Filter) with zone-aware PPE rules.
 Privacy: Face blurring before display, no biometric storage, session-only track IDs.
 """
 
-import cv2
+import cv2 
 import numpy as np
 from typing import List, Dict, Tuple, Optional, Any
 from scipy.optimize import linear_sum_assignment
