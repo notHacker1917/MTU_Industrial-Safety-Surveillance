@@ -7,7 +7,7 @@ Runs entirely on laptop (Windows/Linux/Mac) — all prerequisites auto-checked.
 Author: Computer Vision Expert | Target: Raspberry Pi 5 + OAK-D MyriadX
 """
 
-import subprocess
+import subprocess 
 import sys
 import os 
 import json
