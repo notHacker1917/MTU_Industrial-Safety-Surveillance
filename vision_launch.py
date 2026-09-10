@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
-def generate_launch_description() -> LaunchDescription:
+def generate_launch_description() -> LaunchDescription: 
     """
     Generate ROS2 launch description for vision node.
 
