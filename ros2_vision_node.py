@@ -12,7 +12,7 @@ from typing import Dict, Optional, List, Any
 from collections import defaultdict
    
 # ROS2 imports with graceful fallback
-try:
+try: 
     import rclpy
     from rclpy.node import Node
     from std_msgs.msg import String
