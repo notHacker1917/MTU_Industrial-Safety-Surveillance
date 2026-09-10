@@ -14,7 +14,7 @@ Run on your laptop:
   python collect_ppe_data.py
 
 Keys:
-  S = Suit (YES)        | N = No Suit (NO)
+  S = Suit (YES)        | N = No Suit (NO) 
   H = Shield (YES)      | X = No Shield (NO)
   G = Gloves (YES)      | B = No Gloves (NO)
   SPACE = Capture       | Q = Quit
