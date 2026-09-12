@@ -3,7 +3,7 @@
 # Usage: bash copy_to_pi.sh 192.168.1.100
 #   or:  bash copy_to_pi.sh ubuntu@192.168.1.100
 
-set -e
+set -e 
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <pi-ip-or-user@ip>"
