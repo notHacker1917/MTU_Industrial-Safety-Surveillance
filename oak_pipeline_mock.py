@@ -16,7 +16,7 @@ class MockOakDPipeline:
     without actual hardware. Returns random person detections in frame.
     """
 
-    def __init__(self, blob_path: str) -> None:
+    def __init__(self, blob_path: str) -> None: 
         """
         Initialize mock pipeline.
 
