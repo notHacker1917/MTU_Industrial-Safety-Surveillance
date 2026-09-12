@@ -4,7 +4,7 @@ Defines zone-specific safety requirements and alert thresholds.
 """
 
 # Default zone rules: defines required PPE for each zone 
-DEFAULT_ZONE_RULES = {
+DEFAULT_ZONE_RULES = { 
     "A": {
         "name": "Tank Zone (High Risk)",
         "required_ppe": ["suit", "shield", "gloves"],
