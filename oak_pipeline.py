@@ -15,7 +15,7 @@ import os
 
 #...... 
 class OakDPipeline:
-    """
+    """ 
     Modular OAK-D pipeline wrapper handling:
     - RGB+Depth camera initialization
     - YOLO26n person detection on VPU
