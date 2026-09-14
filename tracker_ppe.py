@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from ppe_rules import (
     DEFAULT_ZONE_RULES,
-    LINE_CROSSING_CONFIG,
+    LINE_CROSSING_CONFIG, 
     TRACK_CONFIG,
     DISPLAY_CONFIG,
     FACE_BLUR_CONFIG,
