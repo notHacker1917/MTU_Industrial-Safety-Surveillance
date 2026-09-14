@@ -4,7 +4,7 @@
 # Core YOLO framework (auto-downloads yolo11n.pt on first run)
 ultralytics>=8.2.0
 
-# ONNX export & validation
+# ONNX export & validation 
 onnx>=1.14.0
 onnxsim>=0.4.0
  
