@@ -12,7 +12,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description() -> LaunchDescription: 
     """
-    Generate ROS2 launch description for vision node.
+    Generate ROS2 launch description for vision node. 
 
     Returns:
         LaunchDescription with all nodes and configurations
